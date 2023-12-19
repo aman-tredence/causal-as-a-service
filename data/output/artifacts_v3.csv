@@ -1,0 +1,14 @@
+Target,TreatmentVariables,TableName,DAG,ModelName,CausalEstimate,RefutationNewEstimate,p_value,EstimationMethod,Version,ModelCreationDate,IdentifiedestimandFile,ModelURL,IdentifiedEstimandFile
+retention,"oos, trf_avg, atc, latency, perfect_order",C:\One-Drive\OneDrive - Tredence\Retail Intelligence\Causal as a Service\data\input\input_data.csv,"strict digraph {
+retention;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> retention;
+trf_avg -> retention;
+atc -> retention;
+latency -> retention;
+perfect_order -> retention;
+}",C:\One-Drive\OneDrive - Tredence\Retail Intelligence\Causal as a Service\model\retention_Causal_model_v3.pkl,0.010391601810781359,0.010901324132789094,0.9199999999999999,backdoor.generalized_linear_model,3,2023-11-07,,,retention_identified_estimand_v3.pkl

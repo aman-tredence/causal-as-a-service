@@ -1,0 +1,14 @@
+Target,TreatmentVariables,TableName,DAG,ModelName,CausalEstimate,RefutationNewEstimate,p_value,EstimationMethod,Version,ModelCreationDate,IdentifiedestimandFile,ModelURL,IdentifiedEstimandFile
+GMV_cur,"oos, trf_avg, atc, latency, perfect_order",C:\One-Drive\OneDrive - Tredence\Retail Intelligence\Causal as a Service\data\input\input_data.csv,"strict digraph {
+GMV_cur;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> GMV_cur;
+trf_avg -> GMV_cur;
+atc -> GMV_cur;
+latency -> GMV_cur;
+perfect_order -> GMV_cur;
+}",C:\One-Drive\OneDrive - Tredence\Retail Intelligence\Causal as a Service\model\GMV_cur_Causal_model_v2.pkl,142.5447920810118,142.59846979137333,0.98,backdoor.linear_regression,2,2023-11-07,,,GMV_cur_identified_estimand_v2.pkl

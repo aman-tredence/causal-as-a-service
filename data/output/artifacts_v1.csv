@@ -1,0 +1,14 @@
+Target,TreatmentVariables,TableName,DAG,ModelName,CausalEstimate,RefutationNewEstimate,p_value,EstimationMethod,Version,ModelCreationDate,IdentifiedestimandFile,ModelURL,IdentifiedEstimandFile
+GMV_cur,"oos, trf_avg, atc, latency, perfect_order",C:\Users\pushpesh.pallav\Downloads\OneDrive_2023-12-11\Causal as a Service Model\Causal as a Service\data\input\input_data.csv,"strict digraph {
+GMV_cur;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> GMV_cur;
+trf_avg -> GMV_cur;
+atc -> GMV_cur;
+latency -> GMV_cur;
+perfect_order -> GMV_cur;
+}",C:\Users\pushpesh.pallav\Downloads\OneDrive_2023-12-11\Causal as a Service Model\Causal as a Service\model\GMV_cur_Causal_model_v1.pkl,142.54479208101216,142.36982698830153,0.94,backdoor.linear_regression,1,2023-12-12,,,GMV_cur_identified_estimand_v1.pkl
