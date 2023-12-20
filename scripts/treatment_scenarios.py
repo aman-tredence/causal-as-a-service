@@ -1,6 +1,6 @@
 class TreatmentScenario:
 
-    def __init__(self, artifact_file_path) -> None:
+    def __init__(self, data_dir, artifact_file_path) -> None:
         
         self.artifacts = pd.read_csv(artifact_file_path)
 
@@ -15,6 +15,14 @@ class TreatmentScenario:
 
         #Model
         self.version = config['model']['version']
+
+        self.tweak_col = config['data_change']['tweak_col']
+        self.distribution = config['data_change']['distribution']
+        self.min_value = config['data_change']['min_value']
+        self.max_value = config['data_change']['max_value']
+        self.mean = config['data_change']['mean']
+        self.std_dev = config['data_change']['std_dev']
+
 
     def get_treatements(self):
         
@@ -70,15 +78,15 @@ class TreatmentScenario:
         model_file.close()
         return causal_model
 
-    def get_predictions(self, causal_model):
+    def get_predictions(self, df, causal_model):
         print('Performing Prediction')
-        x_dowhy_input = self.test_df[self.treatment_vars]
+        x_dowhy_input = df[self.treatment_vars]
         x_dowhy_input.insert(0,'intercept',1)
 
         y_pred_dowhy = causal_model.get_prediction(exog = x_dowhy_input.to_numpy())
-        self.data[f'{self.target}_pred'] = y_pred_dowhy.predicted_mean.tolist()
+        df[f'{self.target}_pred'] = y_pred_dowhy.predicted_mean.tolist()
 
-        return self.data
+        return df
     
     def normal_distribution(self, size, mean, std_dev, min_value, max_value):
         while True:
@@ -113,16 +121,17 @@ class TreatmentScenario:
                 return arr
             
 
-    def scenario_creation(self, X):
+    def scenario_creation(self, X, fetch_models, fetch_columns):
 
         config = X[0]
 
-        if self.fetch_models:
+        if fetch_models:
             #fetch the Trained Models
             model_version = self.fetch_model_version(self.target, self.model_output_path)
             print("model_versions: ", model_version[::-1])
+            return model_version
     
-        if self.fetch_columns:
+        if fetch_columns:
             treatment_vars = self.get_treatements()
             return treatment_vars
         
@@ -131,11 +140,63 @@ class TreatmentScenario:
 
             self.data = self.read_data( self.target, self.treatment_vars)
 
+             #clean Data
+            self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
+
+            #load model
+            causal_model = self.fetch_model()
+
+            #estimation method
+            self.estimate_method = self.get_estimation_method()
+
+            new_df = self.data.copy()
+            old_df = self.data.copy()
+
+            var = self.tweak_col
+            distribution = self.distribution
+            min_value = float(self.min_value)
+            max_value = float(self.max_value)
+            mean = float(self.mean)
+            std_dev = float(self.std_dev)
+            size = len(self.data)
+
+            if distribution.lower() == 'normal':
+                new_df[var] = self.normal_distribution(size, mean, std_dev, min_value, max_value)
+
+            if distribution.lower() == 'poisson':
+                new_df[var] = self.poisson_distribution(size, mean, min_value, max_value)
+
+            if distribution.lower() == 'lognormal':
+                new_df[var] = self.lognormal_distribution(size, mean, std_dev, min_value, max_value)
+
+            
+            new_pred = self.get_predictions(new_df, causal_model)
+            old_pred = self.get_predictions(old_df, causal_model)
+
+            new_output = new_pred[[var, f"{self.target}_pred"]]
+            old_output = new_pred[[var, f"{self.target}_pred"]]
+
+            var_upper_cap = old_output[var].quantile(0.99)
+            target_upper_cap = old_output[var].quantile(0.99)
+
+            non_outlier_indices = old_output[(old_output[var] <= var_upper_cap) &
+                                             (old_output[f"{self.target}_pred"] >= 0) &
+                                             (old_output[f"{self.target}_pred"] <= target_upper_cap)]
+            
+            old_output = old_output[old_output.index.isin(non_outlier_indices)]
+            new_output = new_output[new_output.index.isin(non_outlier_indices)]
+
+            print("Old_df size: ", len(old_output))
+            print("New_df size: ", len(new_output))
+
+            old_df.to_csv("old_df.csv", index = False)
+            new_df.to_csv("new_df.csv", index = False)
+
+
+
             
 
 
-
-    
         
     
 
