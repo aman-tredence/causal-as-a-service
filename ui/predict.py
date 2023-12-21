@@ -12,16 +12,17 @@ def predict_widget():
             st.markdown("Data")
 
             # TODO: Target column names
-            target_variable = st.selectbox("Target Variable: ", [])
+            target_variable = st.selectbox(
+                "Target Variable: ", [], key="predict_target"
+            )
 
             dag_path = st.file_uploader("DAG Path: ")
 
-            with st.button("Fetch Models"):
+            if st.button("Fetch Models"):
                 # TODO: Fetch Models
                 with st.container(border=True):
                     st.markdown("### Model")
                     st.selectbox("Model Variables: ", [])
 
-                    with st.button("Predict"):
-                        ...
+                    if st.button("Predict", key="Predict_button"):
                         render(output_widget)
