@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 from dowhy import CausalModel
-pd.set_option('display.max_columns',1000)
 import warnings
 import pydot
 import pickle

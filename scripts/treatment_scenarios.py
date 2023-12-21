@@ -1,3 +1,27 @@
+import pandas as pd
+import numpy as np
+from dowhy import CausalModel
+import warnings
+import pydot
+import pickle
+import dowhy
+import json
+import dowhy.plotter
+warnings.filterwarnings('ignore')
+from datetime import datetime
+import os
+import re
+
+class LazyDecoder(json.JSONDecoder):
+    def decode(self, s, **kwargs):
+        regex_replacements = [
+            (re.compile(r'([^\\])\\([^\\])'), r'\1\\\\\2'),
+            (re.compile(r',(\s*])'), r'\1'),
+        ]
+        for regex, replacement in regex_replacements:
+            s = regex.sub(replacement, s)
+        return super().decode(s, **kwargs)
+
 class TreatmentScenario:
 
     def __init__(self, data_dir, artifact_file_path) -> None:
