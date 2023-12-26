@@ -24,8 +24,11 @@ class LazyDecoder(json.JSONDecoder):
 
 class TreatmentScenario:
 
-    def __init__(self, data_dir, artifact_file_path) -> None:
+    def __init__(self, data_dir) -> None:
+
+        self.data_dir = data_dir
         
+        artifact_file_path = os.path.join(self.data_dir, "data/input/treatment_config.json")
         self.artifacts = pd.read_csv(artifact_file_path)
 
     def get_input(self, config):
@@ -164,7 +167,7 @@ class TreatmentScenario:
 
             self.data = self.read_data( self.target, self.treatment_vars)
 
-             #clean Data
+            #clean Data
             self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
 
             #load model
@@ -212,6 +215,11 @@ class TreatmentScenario:
 
             print("Old_df size: ", len(old_output))
             print("New_df size: ", len(new_output))
+
+            # return {
+            #     'old_df': old_df,
+            #     'new_df': new_df
+            # }
 
             old_df.to_csv("old_df.csv", index = False)
             new_df.to_csv("new_df.csv", index = False)

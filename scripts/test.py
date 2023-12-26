@@ -159,7 +159,7 @@ class Testing:
             self.test_df[treatment] = self.test_df[treatment].apply(lambda x: 1 if x>thresh else 0)
 
         #predictions
-        self.data = self.get_predictions(causal_model)
+        self.data = self.get_predictions(self.data, causal_model)
 
         #saving the model and model artifacts
         file_path = self.save_pred_files()
