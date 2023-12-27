@@ -4,10 +4,10 @@ from glob import glob
 
 
 def render(column):
-    ...
+    st.markdown("<center><h1>Prediction Complete</h1></center>", unsafe_allow_html=True)
 
 
-def predict_widget(data_path):
+def predict_widget(data_path: str, backend: "Testing"):
     input_widget, output_widget = st.columns([0.25, 0.75])
     with input_widget:
         with st.container(border=True):
@@ -33,4 +33,15 @@ def predict_widget(data_path):
                 st.selectbox("Model Variables: ", options=models, key="predict_model")
 
                 if st.button("Predict", key="Predict_button"):
+                    config = {
+                        "data": {
+                            "target": target_variable,
+                            "data_path": data_path.joinpath("input"),
+                            "data_output_path": data_path.joinpath("output"),
+                            "model_output_path": data_path.joinpath("..", "model"),
+                        },
+                        "model": {"version": 1},
+                        "analyse": True,
+                    }
+                    backend.predict([config])
                     render(output_widget)

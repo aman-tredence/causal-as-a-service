@@ -1,40 +1,20 @@
 import os
+import json
 import streamlit as st
 
 
 def render():
-    ...
+    st.markdown("<center><h1>Training Complete</h1></center>", unsafe_allow_html=True)
 
 
-def update_json(
-    file: str,
-    lower: float,
-    upper: float,
-    est_method: str,
-    ref_method: str,
-    save_model: bool,
-    target_var: str,
-):
-    ...
-
-
-def train_widget(data_path: str):
+def train_widget(data_path: str, backend: "Training"):
     input_widget, output_widget = st.columns([0.25, 0.75])
     with input_widget:
         with st.container(border=True):
             st.markdown("### Data")
-
             data_object = st.file_uploader("Data File (CSV): ")
-            if data_object is not None:
-                with open(os.path.join(data_path, "input", "input_data.csv"), "w") as f:
-                    f.write(data_object.read())
-
             target_variable = st.selectbox("Target Variable: ", ["GMV", "Retention"])
-
             dag_file = st.file_uploader("DAG File: ")
-            if dag_file is not None:
-                with open(os.path.join(data_path, "input", "dag.txt"), "w") as f:
-                    f.write(dag_file.read())
 
         with st.container(border=True):
             st.markdown("### Sampling")
@@ -51,10 +31,46 @@ def train_widget(data_path: str):
             refutation_method = st.selectbox(
                 "Refutation Method: ",
                 ["data_subset_refuter", "random_common_cause", "None"],
-                value="None",
+                index=2,
             )
 
             save = st.toggle("Save Model", value=True)
 
         if st.button("Train"):
-            print("Train")
+            # Write uploaded files
+            csv_path = os.path.join(data_path, "input", "input_data.csv")
+            if data_object is not None:
+                with open(csv_path, "wb") as f:
+                    f.write(data_object.read())
+
+            f_name = (
+                "dag_linear.txt"
+                if estimation_method == "backdoor.linear_regression"
+                else "dag_glm.txt"
+            )
+            dag_path = os.path.join(data_path, "input", f_name)
+            if dag_file is not None:
+                with open(dag_path, "wb") as f:
+                    f.write(dag_file.read())
+
+            # Run Backend
+            config = {
+                "data": {
+                    "target": target_variable,
+                    "dag": "",
+                    "dag_path": dag_path,
+                    "target_upper_cap": upper_cap,
+                    "target_lower_cap": lower_cap,
+                    "data_path": csv_path,
+                    "data_output_path": data_path.joinpath("output"),
+                    "model_output_path": data_path.joinpath("..", "model"),
+                },
+                "methods": {
+                    "estimation_method": estimation_method,
+                    "refutation_method": refutation_method,
+                },
+                "model": {"save": save},
+            }
+
+            backend.predict([config])
+            render(output_widget)
