@@ -199,4 +199,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Python Bytecode
+*.pyc
+
 # End of https://www.toptal.com/developers/gitignore/api/python,windows

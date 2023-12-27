@@ -319,13 +319,13 @@ class Training:
         df_coeffs.to_csv(coeffs_file)
 
 
-# Logic starts here
-with open(
-    "C:\\Users\\pushpesh.pallav\\Downloads\\OneDrive_2023-12-11\\Causal as a Service Model\\Causal as a Service\\data\input\\train_config_linear.json"
-) as tc:
-    #    config_load = user_file.read()
-    config = json.load(tc, cls=LazyDecoder)
+# # Logic starts here
+# with open(
+#     "C:\\Users\\pushpesh.pallav\\Downloads\\OneDrive_2023-12-11\\Causal as a Service Model\\Causal as a Service\\data\input\\train_config_linear.json"
+# ) as tc:
+#     #    config_load = user_file.read()
+#     config = json.load(tc, cls=LazyDecoder)
 
-train = Training()
+# train = Training()
 
-train.predict([config])
+# train.predict([config])

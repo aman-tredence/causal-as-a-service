@@ -178,11 +178,11 @@ class Testing:
             }     
 
 
-with open('C:\\Users\\pushpesh.pallav\\Downloads\\OneDrive_2023-12-11\\Causal as a Service Model\\Causal as a Service\\data\\input\\predict_config.json') as tc:
-#    config_load = user_file.read()
-    config = json.load(tc, cls=LazyDecoder)
+# with open('C:\\Users\\pushpesh.pallav\\Downloads\\OneDrive_2023-12-11\\Causal as a Service Model\\Causal as a Service\\data\\input\\predict_config.json') as tc:
+# #    config_load = user_file.read()
+#     config = json.load(tc, cls=LazyDecoder)
 
 
-test = Testing()
+# test = Testing()
 
-test.predict([config])
+# test.predict([config])

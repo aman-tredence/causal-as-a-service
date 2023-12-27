@@ -22,14 +22,11 @@ class LazyDecoder(json.JSONDecoder):
             s = regex.sub(replacement, s)
         return super().decode(s, **kwargs)
 
-class TreatmentScenario:
+class TreatmentScenarios:
 
     def __init__(self, data_dir) -> None:
 
         self.data_dir = data_dir
-        
-        artifact_file_path = os.path.join(self.data_dir, "data/input/treatment_config.json")
-        self.artifacts = pd.read_csv(artifact_file_path)
 
     def get_input(self, config):
         #Data
@@ -37,8 +34,6 @@ class TreatmentScenario:
         self.target = config['data']['target']
         self.data_output_path = config['data']['data_output_path']
         self.model_output_path = config['data']['model_output_path']
-        
-        self.fetch_models = config['fetch_models']
 
         #Model
         self.version = config['model']['version']
@@ -50,10 +45,13 @@ class TreatmentScenario:
         self.mean = config['data_change']['mean']
         self.std_dev = config['data_change']['std_dev']
 
+        artifact_file_path = os.path.join(self.data_dir, f"data/output/artifacts_v{self.version}.csv")
+        print("Reading artifact file from : ", artifact_file_path)
+        self.artifacts = pd.read_csv(artifact_file_path)
 
     def get_treatements(self):
         
-        artifacts= pd.read_csv(f"{self.data_output_path}/artifacts_v{self.version}.csv")            
+        artifacts= pd.read_csv(f"{self.data_dir}/{self.data_output_path}/artifacts_v{self.version}.csv")            
         treatments = artifacts['TreatmentVariables'].values[0]
         treatments = treatments.split(',')
         treatments = [x.strip() for x in treatments]
@@ -64,7 +62,7 @@ class TreatmentScenario:
         
         print('Reading data from GCS')
         
-        data = pd.read_csv(f"{self.data_path}/predict_data.csv")
+        data = pd.read_csv(f"{self.data_dir}/data/input/predict_data.csv")
         data = data[treatment_vars + [target]]
         
         return data
@@ -97,8 +95,8 @@ class TreatmentScenario:
     def fetch_model(self):
 
         print('loading Model...')
-        self.model_name = f'{self.target}_Causal_model_v{model.version}.pkl'
-        model_path = self.model_output_path + self.model_name
+        self.model_name = f'{self.target}_Causal_model_v{self.version}.pkl'
+        model_path = os.path.join(self.data_dir, self.model_output_path, self.model_name)
         model_file = open(model_path, 'rb')
         causal_model = pickle.load(model_file)
         # close the file
@@ -122,7 +120,7 @@ class TreatmentScenario:
             z0 =  np.sqrt(-2 * np.log(u1)) * np.cos(2 * np.pi * u2)
 
             arr = mean + std_dev + z0
-            arr.clip(arr, min_value, max_value)
+            arr = np.clip(arr, min_value, max_value)
 
             if np.all(arr >= min_value) and np.all(arr <= max_value):
                 return arr
@@ -148,15 +146,16 @@ class TreatmentScenario:
                 return arr
             
 
-    def scenario_creation(self, X, fetch_models, fetch_columns):
+    def scenario_creation(self, X, fetch_columns):
 
         config = X[0]
+        self.get_input(config)
 
-        if fetch_models:
-            #fetch the Trained Models
-            model_version = self.fetch_model_version(self.target, self.model_output_path)
-            print("model_versions: ", model_version[::-1])
-            return model_version
+        # if fetch_models:
+        #     #fetch the Trained Models
+        #     model_version = self.fetch_model_version(self.target, self.model_output_path)
+        #     print("model_versions: ", model_version[::-1])
+        #     return model_version
     
         if fetch_columns:
             treatment_vars = self.get_treatements()
@@ -170,11 +169,12 @@ class TreatmentScenario:
             #clean Data
             self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
 
+            print("Data size:", len(self.data))
             #load model
             causal_model = self.fetch_model()
 
             #estimation method
-            self.estimate_method = self.get_estimation_method()
+            # self.estimate_method = self.get_estimation_method()
 
             new_df = self.data.copy()
             old_df = self.data.copy()
@@ -201,34 +201,33 @@ class TreatmentScenario:
             old_pred = self.get_predictions(old_df, causal_model)
 
             new_output = new_pred[[var, f"{self.target}_pred"]]
-            old_output = new_pred[[var, f"{self.target}_pred"]]
+            old_output = old_pred[[var, f"{self.target}_pred"]]
 
             var_upper_cap = old_output[var].quantile(0.99)
-            target_upper_cap = old_output[var].quantile(0.99)
+            target_upper_cap = old_output[f"{self.target}_pred"].quantile(0.99)
 
             non_outlier_indices = old_output[(old_output[var] <= var_upper_cap) &
                                              (old_output[f"{self.target}_pred"] >= 0) &
-                                             (old_output[f"{self.target}_pred"] <= target_upper_cap)]
+                                             (old_output[f"{self.target}_pred"] <= target_upper_cap)].index
             
+
             old_output = old_output[old_output.index.isin(non_outlier_indices)]
             new_output = new_output[new_output.index.isin(non_outlier_indices)]
 
-            print("Old_df size: ", len(old_output))
-            print("New_df size: ", len(new_output))
-
+            old_output = old_output[[var, f"{self.target}_pred"]]
+            new_output = new_output[[var, f"{self.target}_pred"]]
+            
             # return {
             #     'old_df': old_df,
             #     'new_df': new_df
             # }
 
-            old_df.to_csv("old_df.csv", index = False)
-            new_df.to_csv("new_df.csv", index = False)
-
-
-
+            old_output.to_csv(
+                os.path.join(self.data_dir, 
+                             "data/output/treatment_output/old_output.csv"),
+                             index = False)
             
-
-
-        
-    
-
+            new_output.to_csv(
+                os.path.join(self.data_dir, 
+                             "data/output/treatment_output/new_output.csv"), 
+                             index = False)

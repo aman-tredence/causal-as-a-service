@@ -30,9 +30,6 @@ class CustomerScenarios:
         
         self.data_dir = data_dir
         
-        artifact_file_path = os.path.join(self.data_dir, "data/input/customer_config.json")
-        self.artifacts = pd.read_csv(artifact_file_path)
-
     def get_input(self, config):
         #Data
         self.data_path = config['data']['data_path']
@@ -40,25 +37,36 @@ class CustomerScenarios:
         self.data_output_path = config['data']['data_output_path']
         self.model_output_path = config['data']['model_output_path']
         
-        self.fetch_models = config['fetch_models']
+        # self.fetch_models = config['fetch_models']
 
         #Model
         self.version = config['model']['version']
-
+        
         self.new_data = config['new_data']
 
-        old_data = config["old_data"]
-        if old_data != "":
-            self.old_data = pd.DataFrame(old_data)
+        # old_data = config["old_data"]
+        # if old_data != "":
+        #     self.old_data = pd.DataFrame(old_data)
 
+        artifact_file_path = os.path.join(self.data_dir, f"data/output/artifacts_v{self.version}.csv")
+        self.artifacts = pd.read_csv(artifact_file_path)
+        
         print("Target: ", self.target)
 
+    def get_treatements(self):
+        
+        artifacts= pd.read_csv(f"{self.data_dir}/{self.data_output_path}/artifacts_v{self.version}.csv")            
+        treatments = artifacts['TreatmentVariables'].values[0]
+        treatments = treatments.split(',')
+        treatments = [x.strip() for x in treatments]
+        
+        return treatments    
 
     def read_data(self, target, treatment_vars):
         
         print('Reading data from GCS')
         
-        data = pd.read_csv(f"{self.data_path}/predict_data.csv")
+        data = pd.read_csv(f"{self.data_dir}/data/input/predict_data.csv")
         data = data[treatment_vars + [target]]
         
         return data
@@ -90,18 +98,18 @@ class CustomerScenarios:
 
         print('Loading Model...')
         self.model_name = f'{self.target}_Causal_model_v{model_version}.pkl'
-        model_path = self.model_output_path + self.model_name
+        model_path = os.path.join(self.data_dir, self.model_output_path, self.model_name)
         model_file = open(model_path, 'rb')
         causal_model = pickle.load(model_file)
         # close the file
         model_file.close()
 
-        coeffs = pd.read_csv(os.path.join(self.data_dir, f"data/output/coeffs_v{model_version}"))
+        coeffs = pd.read_csv(os.path.join(self.data_dir, f"data/output/coeffs_v{model_version}.csv"))
         
         return causal_model, coeffs
     
     def get_predictions(self, df, causal_model):
-        print('Performing Prediction')
+        # print('Performing Prediction')
         x_dowhy_input = df[self.treatment_vars]
         x_dowhy_input.insert(0,'intercept',1)
 
@@ -135,24 +143,25 @@ class CustomerScenarios:
 
         return feature_stats
     
-    def scenario_creation(self, X, fetch_models, analyze):
+    def scenario_creation(self, X, analyze):
 
         config = X[0]
+        self.get_input(config)
 
-        if fetch_models:
-            #fetch the Trained Models
-            model_version = self.fetch_model_version(self.target, self.model_output_path)
-            print("model_versions: ", model_version[::-1])
-            return model_version
+        # if fetch_models:
+        #     #fetch the Trained Models
+        #     model_version = self.fetch_model_version(self.target, self.model_output_path)
+        #     print("model_versions: ", model_version[::-1])
+        #     return model_version
         
         if analyze:
             self.treatment_vars = self.get_treatements()
 
-            self.data = self.read_data( self.target, self.treatment_vars)
+            self.data = self.read_data(self.target, self.treatment_vars)
 
             self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
 
-            causal_model, coeffs = self.fetch_model_and_coeffs()
+            causal_model, coeffs = self.fetch_model_and_coeffs(self.version)
 
             row_df = pd.DataFrame(self.data.iloc[0, :]).T
 
@@ -176,18 +185,23 @@ class CustomerScenarios:
             
             # clean Data
             self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
+            
+            # New Data
+            new_data = pd.DataFrame(self.new_data)
+            
+            new_data = self.preprocess_data(new_data, self.target, self.treatment_vars)
 
             # load model
-            causal_model = self.fetch_model()
+            causal_model, coeffs = self.fetch_model_and_coeffs(self.version)
 
             # estimation method
-            self.estimate_method = self.get_estimation_method()
+            # self.estimate_method = self.get_estimation_method()
 
             #predictions
             self.data = self.get_predictions(self.data, causal_model)
 
             # Prediction on new data
-            predictions = self.get_predictions(self.new_data, causal_model)
+            predictions = self.get_predictions(new_data, causal_model)
 
             upper_caps = {x: self.data[x].quantile(0.95) for x in self.treatment_vars}
 
@@ -199,18 +213,29 @@ class CustomerScenarios:
             #     'data': self.data
             # }
         
-            predictions.to_csv(os.path.join(self.data_dir, "data/output/treatment/predictoins.csv"), index = False)
-            self.data.to_csv(os.path.join(self.data_dir, "data/output/treatment/data_predictions.csv"), index = False)
+            predictions.to_csv(
+                os.path.join(self.data_dir, 
+                             "data/output/customer_output/new_predictions.csv"),
+                               index = False)
+            
+            self.data.to_csv(
+                os.path.join(self.data_dir, 
+                             "data/output/customer_output/data_predictions.csv"), 
+                             index = False)
 
+            try:
+                old_predictions = pd.read_csv(
+                    os.path.join(self.data_dir,
+                                 "data/output/customer_output/old_predictions.csv")
+                                 )
+                
+            except:
+                old_predictions = pd.DataFrame()
 
-
-
-    
-
-
-    
-
-    
-
-
+            old_predictions = pd.concat([old_predictions, predictions])
+            old_predictions.to_csv(os.path.join(self.data_dir,
+                                 "data/output/customer_output/old_predictions.csv"),
+                                 index = False
+                                 )
+                
         
