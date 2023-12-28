@@ -19,9 +19,10 @@ def train_widget(data_path: str, backend: "Training"):
                 with open(csv_path, "w") as f:
                     f.write(data_object.read())
 
-            target_variable = st.selectbox("Target Variable: ", ["GMV", "Retention"])
+            target_variable = st.selectbox("Target Variable: ", ["GMV_cur", "retention"])
 
             dag_file = st.file_uploader("DAG File: ")
+             
             dag_path = os.path.join(data_path, "input", "dag.txt")
             if dag_file is not None:
                 with open(dag_path, "w") as f:
@@ -41,13 +42,20 @@ def train_widget(data_path: str, backend: "Training"):
             )
             refutation_method = st.selectbox(
                 "Refutation Method: ",
-                ["data_subset_refuter", "random_common_cause", "None"],
+                ["data_subset_refuter", "random_common_cause", None],
                 index=2,
             )
 
             save = st.toggle("Save Model", value=True)
 
         if st.button("Train"):
+
+            fname = "dag_glm.txt"
+            if estimation_method == "backdoor.linear_regression":
+                fname = "dag_linear.txt"
+
+            dag_path = os.path.join(data_path, "input", fname)
+
             config = {
                 "data": {
                     "target": target_variable,

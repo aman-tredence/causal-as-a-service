@@ -1,0 +1,27 @@
+Target,TreatmentVariables,TableName,DAG,ModelName,CausalEstimate,RefutationNewEstimate,p_value,EstimationMethod,Version,ModelCreationDate,IdentifiedestimandFile,ModelURL,IdentifiedEstimandFile
+GMV_cur,"oos, trf_avg, atc, latency, perfect_order",C:\Users\aman.jhakra\Documents\Causal as a Service\data\input\input_data.csv,"strict digraph {
+GMV_cur;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> GMV_cur;
+trf_avg -> GMV_cur;
+atc -> GMV_cur;
+latency -> GMV_cur;
+perfect_order -> GMV_cur;
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\GMV_cur_Causal_model_v1.pkl,142.54479208101267,0,0,backdoor.linear_regression,1,2023-12-28,,,GMV_cur_identified_estimand_v1.pkl
+GMV_cur,"oos, trf_avg, atc, latency, perfect_order",C:\Users\aman.jhakra\Documents\Causal as a Service\data\input\input_data.csv,"strict digraph {
+GMV_cur;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> GMV_cur;
+trf_avg -> GMV_cur;
+atc -> GMV_cur;
+latency -> GMV_cur;
+perfect_order -> GMV_cur;
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\GMV_cur_Causal_model_v2.pkl,142.54479208101267,0,0,backdoor.linear_regression,2,2023-12-28,,,GMV_cur_identified_estimand_v2.pkl
