@@ -63,9 +63,15 @@ class Testing:
 
     def get_treatements(self):
         artifacts = pd.read_csv(
-            f"{self.data_output_path}/artifacts_v{self.version}.csv"
+            os.path.join(
+                self.data_output_path, 
+                f"{self.target}_artifacts.csv"
+                )
         )
-        treatments = artifacts["TreatmentVariables"].values[0]
+
+        treatments = artifacts[artifacts["Version"] == self.version]["TreatmentVariables"].values[0]
+
+        # treatments = artifacts["TreatmentVariables"].values[0]
         treatments = treatments.split(",")
         treatments = [x.strip() for x in treatments]
 
@@ -108,8 +114,8 @@ class Testing:
 
     def fetch_model(self):
         print("loading Model...")
-        self.model_name = f"{self.target}_Causal_model_v{model.version}.pkl"
-        model_path = self.model_output_path + self.model_name
+        self.model_name = f"{self.target}_Causal_model_v{self.version}.pkl"
+        model_path = os.path.join(self.model_output_path, self.model_name)
         model_file = open(model_path, "rb")
         causal_model = pickle.load(model_file)
         # close the file
@@ -131,21 +137,23 @@ class Testing:
         print("Saving Predictions...")
 
         self.data.to_csv(
-            self.data_output_path + f"{self.model_name[:-4]}_predictions.csv",
+            os.path.join(self.data_output_path, f"{self.model_name[:-4]}_predictions.csv"),
             index=False,
         )
 
-        return f"{self.data_output_path[:-1]}"
+        return f"{self.data_output_path}"
 
     def predict(self, X, features_name=None):
         config = X[0]
         self.get_input(config)
-        if self.analyse:
-            # fetch the Trained Models
-            model_version = self.fetch_model_version(
-                self.target, self.model_output_path
-            )
-            print("model_versions: ", model_version[::-1])
+        
+        # if self.analyse:
+        #     # fetch the Trained Models
+        #     model_version = self.fetch_model_version(
+        #         self.target, self.model_output_path
+        #     )
+        #     print("model_versions: ", model_version[::-1])
+        
         if self.data_path:
             print("true")
             # get treatment variables
@@ -162,7 +170,7 @@ class Testing:
             causal_model = self.fetch_model()
 
             # estimation method
-            self.estimate_method = self.get_estimation_method()
+            # self.estimate_method = self.get_estimation_method()
 
             self.test_df = self.data.copy()
 
@@ -176,7 +184,7 @@ class Testing:
             )
 
         # predictions
-        self.data = self.get_predictions(self.data, causal_model)
+        self.data = self.get_predictions(causal_model)
 
         # saving the model and model artifacts
         file_path = self.save_pred_files()
@@ -199,6 +207,7 @@ class Testing:
 # #    config_load = user_file.read()
 #     config = json.load(tc, cls=LazyDecoder)
 
+# data_path = pathlib.Path(__file__).parent.joinpath("data")
 
 # test = Testing()
 
