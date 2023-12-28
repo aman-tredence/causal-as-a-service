@@ -13,24 +13,8 @@ def train_widget(data_path: str, backend: "Training"):
         with st.container(border=True):
             st.markdown("### Data")
             data_object = st.file_uploader("Data File (CSV): ")
-<<<<<<< HEAD
-            target_variable = st.selectbox("Target Variable: ", ["GMV", "Retention"])
-            dag_file = st.file_uploader("DAG File: ")
-=======
-            csv_path = os.path.join(data_path, "input", "input_data.csv")
-            if data_object is not None:
-                with open(csv_path, "w") as f:
-                    f.write(data_object.read())
-
             target_variable = st.selectbox("Target Variable: ", ["GMV_cur", "retention"])
-
             dag_file = st.file_uploader("DAG File: ")
-             
-            dag_path = os.path.join(data_path, "input", "dag.txt")
-            if dag_file is not None:
-                with open(dag_path, "w") as f:
-                    f.write(dag_file.read())
->>>>>>> dev-tmp
 
         with st.container(border=True):
             st.markdown("### Sampling")
@@ -46,18 +30,13 @@ def train_widget(data_path: str, backend: "Training"):
             )
             refutation_method = st.selectbox(
                 "Refutation Method: ",
-<<<<<<< HEAD
-                ["data_subset_refuter", "random_common_cause", "None"],
-=======
                 ["data_subset_refuter", "random_common_cause", None],
->>>>>>> dev-tmp
                 index=2,
             )
 
             save = st.toggle("Save Model", value=True)
 
         if st.button("Train"):
-<<<<<<< HEAD
             # Write uploaded files
             csv_path = os.path.join(data_path, "input", "input_data.csv")
             if data_object is not None:
@@ -75,15 +54,6 @@ def train_widget(data_path: str, backend: "Training"):
                     f.write(dag_file.read())
 
             # Run Backend
-=======
-
-            fname = "dag_glm.txt"
-            if estimation_method == "backdoor.linear_regression":
-                fname = "dag_linear.txt"
-
-            dag_path = os.path.join(data_path, "input", fname)
-
->>>>>>> dev-tmp
             config = {
                 "data": {
                     "target": target_variable,
