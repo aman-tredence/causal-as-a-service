@@ -1,0 +1,14 @@
+Target,TreatmentVariables,TableName,DAG,ModelName,CausalEstimate,RefutationNewEstimate,p_value,EstimationMethod,Version,ModelCreationDate,IdentifiedestimandFile,ModelURL,IdentifiedEstimandFile
+retention,"oos, trf_avg, atc, latency, perfect_order",C:\Users\aman.jhakra\Documents\Causal as a Service\data\input\input_data.csv,"strict digraph {
+retention;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> retention;
+trf_avg -> retention;
+atc -> retention;
+latency -> retention;
+perfect_order -> retention;
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\retention_Causal_model_v1.pkl,0.010391601810781859,0,0,backdoor.generalized_linear_model,1,2023-12-28,,,retention_identified_estimand_v1.pkl

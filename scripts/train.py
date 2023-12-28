@@ -1,6 +1,9 @@
+import os
 import pandas as pd
 import numpy as np
 from dowhy import CausalModel
+
+from datetime import datetime as dt
 
 # from mlutils import dataset, connector
 pd.set_option("display.max_columns", 1000)
@@ -8,7 +11,7 @@ import warnings
 import pydot
 import pickle
 import dowhy
-
+import statsmodels.api as sm
 # import mlflow
 import json
 import dowhy.plotter
@@ -41,12 +44,19 @@ class Training:
         self.data_path = data_dir
 
     def get_latest_version(self):
-        models_available = os.listdir(self.model_output_path)
-        if len(models_available) > 0:
-            latest_available_version = int(
-                pd.Series(models_available).apply(lambda x: get_version(x)).max()
+        try:
+            artifacts = pd.read_csv(
+                os.path.join(
+                    self.data_output_path,
+                    f"{self.target}_artifacts.csv"
+                    )
             )
-            return latest_available_version
+
+            latest_available_version = artifacts['Version'].values[-1]
+        except:
+            latest_available_version = 0
+
+        return latest_available_version
 
     def get_treatments(self, text):
         treatments = text.split("\n")
@@ -157,6 +167,10 @@ class Training:
         return causal_model, self.df_coeffs, causal_estimate
 
     def refutation_check(self, model, identified_estimand, causal_estimate):
+        if self.refutation_method == None:
+            print("Skipping Refutation Check...")
+            new_effect, p_value = 0, 0
+
         if self.refutation_method:
             print("Performing Refutation Check...")
             refutation_result = model.refute_estimate(
@@ -258,30 +272,38 @@ class Training:
             self.version = self.get_latest_version() + 1
         except:
             print("First version of model is trained")
-        self.model_name = (
-            self.model_output_path + f"{self.target}_Causal_model_v{self.version}.pkl"
+        self.model_name = os.path.join(
+            self.model_output_path, f"{self.target}_Causal_model_v{self.version}.pkl"
         )
         with open(self.model_name, "wb") as f:
             pickle.dump(Causal_model, f)
         # Saving Model Artifacts----------------------------------------------------------------------
         print("Saving Model Artifacts...")
-        artifacts = pd.DataFrame(
-            columns=[
-                "Target",
-                "TreatmentVariables",
-                "TableName",
-                "DAG",
-                "ModelName",
-                "CausalEstimate",
-                "RefutationNewEstimate",
-                "p_value",
-                "EstimationMethod",
-                "Version",
-                "ModelCreationDate",
-                "IdentifiedestimandFile",
-                "ModelURL",
-            ]
-        )
+
+        try:
+            artifacts = pd.read_csv(
+                os.path.join(self.data_output_path,
+                              f"{self.target}_artifacts.csv")
+            )
+        except:
+            artifacts = pd.DataFrame(
+                columns=[
+                    "Target",
+                    "TreatmentVariables",
+                    "TableName",
+                    "DAG",
+                    "ModelName",
+                    "CausalEstimate",
+                    "RefutationNewEstimate",
+                    "p_value",
+                    "EstimationMethod",
+                    "Version",
+                    "ModelCreationDate",
+                    "IdentifiedestimandFile",
+                    "ModelURL",
+                ]
+            )
+
         artifacts_dict = {
             "Target": self.target,
             "TreatmentVariables": ", ".join(self.treatment_vars),
@@ -297,26 +319,36 @@ class Training:
             "IdentifiedEstimandFile": f"{self.target}_identified_estimand_v{self.version}.pkl",
             #'ModelURL': url,
         }
-        print("????????????????????????????")
-        print(type(artifacts))
-        print("??????????????????????????")
-        print(type(artifacts))
+
         # Updating the Artifact DataFrame
         artifacts = artifacts.append(artifacts_dict, ignore_index=True)
         # Register the Artifact file to mlflow
-        artifacts_file = self.data_output_path + f"artifacts_v{self.version}.csv"
+        artifacts_file = os.path.join(self.data_output_path, f"{self.target}_artifacts.csv")
         artifacts.to_csv(artifacts_file, index=False)
+
         # Saving Identifies Estimand-------------------------------------------------------------------
-        print("Saving Identifies Estimand...")
-        artifacts_file = (
-            self.data_output_path + f"identified_estimand_v{self.version}.pkl"
-        )
-        with open(artifacts_file, "wb") as f:
-            pickle.dump(identified_estimand, f)
+        # print("Saving Identifies Estimand...")
+        # artifacts_file = (
+        #     os.path.join(self.data_output_path, f"{self.target}_identified_estimand_v{self.version}.pkl")
+        # )
+
+        # with open(artifacts_file, "wb") as f:
+        #     pickle.dump(identified_estimand, f)
+        
         # Saving Coeffs--------------------------------------------------------------------------------------------------------
+        try:
+            df_coeffs_db = pd.read_csv(os.path.join(self.data_output_path, f"{self.target}_coeffs.csv"))
+        except:
+            df_coeffs_db = pd.DataFrame()
+
+        df_coeffs['Version'] = self.version
+
+        df_coeffs_db = pd.concat([df_coeffs_db, df_coeffs])
+
         print("Saving Coefficents...")
-        coeffs_file = self.data_output_path + f"coeffs_v{self.version}.csv"
-        df_coeffs.to_csv(coeffs_file)
+
+        coeffs_file = os.path.join(self.data_output_path, f"{self.target}_coeffs_.csv")
+        df_coeffs_db.to_csv(coeffs_file)
 
 
 # # Logic starts here
