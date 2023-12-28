@@ -7,119 +7,126 @@ import pickle
 import dowhy
 import json
 import dowhy.plotter
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 from datetime import datetime
 import os
 import re
 
+
 class LazyDecoder(json.JSONDecoder):
     def decode(self, s, **kwargs):
         regex_replacements = [
-            (re.compile(r'([^\\])\\([^\\])'), r'\1\\\\\2'),
-            (re.compile(r',(\s*])'), r'\1'),
+            (re.compile(r"([^\\])\\([^\\])"), r"\1\\\\\2"),
+            (re.compile(r",(\s*])"), r"\1"),
         ]
         for regex, replacement in regex_replacements:
             s = regex.sub(replacement, s)
         return super().decode(s, **kwargs)
-    
 
 
 class CustomerScenarios:
-
     def __init__(self, data_dir) -> None:
-        
         self.data_dir = data_dir
-        
+
     def get_input(self, config):
-        #Data
-        self.data_path = config['data']['data_path']
-        self.target = config['data']['target']
-        self.data_output_path = config['data']['data_output_path']
-        self.model_output_path = config['data']['model_output_path']
-        
+        # Data
+        self.data_path = config["data"]["data_path"]
+        self.target = config["data"]["target"]
+        self.data_output_path = config["data"]["data_output_path"]
+        self.model_output_path = config["data"]["model_output_path"]
+
         # self.fetch_models = config['fetch_models']
 
-        #Model
-        self.version = config['model']['version']
-        
-        self.new_data = config['new_data']
+        # Model
+        self.version = config["model"]["version"]
+
+        self.new_data = config["new_data"]
 
         # old_data = config["old_data"]
         # if old_data != "":
         #     self.old_data = pd.DataFrame(old_data)
 
-        artifact_file_path = os.path.join(self.data_dir, f"data/output/artifacts_v{self.version}.csv")
+        artifact_file_path = os.path.join(
+            self.data_dir, f"data/output/{self.target}_artifacts.csv"
+        )
         self.artifacts = pd.read_csv(artifact_file_path)
-        
+
         print("Target: ", self.target)
 
     def get_treatements(self):
-        
-        artifacts= pd.read_csv(f"{self.data_dir}/{self.data_output_path}/artifacts_v{self.version}.csv")            
-        treatments = artifacts['TreatmentVariables'].values[0]
-        treatments = treatments.split(',')
+        artifacts = pd.read_csv(
+            f"{self.data_dir}/{self.data_output_path}/{self.target}_artifacts.csv"
+        )
+        treatments = artifacts["TreatmentVariables"].values[0]
+        treatments = treatments.split(",")
         treatments = [x.strip() for x in treatments]
-        
-        return treatments    
+
+        return treatments
 
     def read_data(self, target, treatment_vars):
-        
-        print('Reading data from GCS')
-        
+        print("Reading data from GCS")
+
         data = pd.read_csv(f"{self.data_dir}/data/input/predict_data.csv")
         data = data[treatment_vars + [target]]
-        
+
         return data
-    
+
     def preprocess_data(self, df, target, treatment_vars):
         ## Clean the data
-        
-        #Replace null string values
-        df.replace('#N/A',0,inplace= True)
-        df.replace('null',0,inplace= True)
-        
-        #Replace infinte values
+
+        # Replace null string values
+        df.replace("#N/A", 0, inplace=True)
+        df.replace("null", 0, inplace=True)
+
+        # Replace infinte values
         df = df.drop_duplicates()
-        
-        #Fill null values by 0
-        df= df.fillna(0)
-        
+
+        # Fill null values by 0
+        df = df.fillna(0)
+
         df[self.treatment_vars] = df[self.treatment_vars].astype(float)
 
-        return df  
-    
+        return df
+
     def fetch_model_version(self, target, model_output_path):
         model_versions = os.listdir(model_output_path[:-1])
-        target_model_versions = pd.Series(model_versions).apply(lambda x:x if len(x.split(target)) > 1 else None)
-        target_model_versions = list(target_model_versions[target_model_versions.notna()])
+        target_model_versions = pd.Series(model_versions).apply(
+            lambda x: x if len(x.split(target)) > 1 else None
+        )
+        target_model_versions = list(
+            target_model_versions[target_model_versions.notna()]
+        )
         return target_model_versions
-    
-    def fetch_model_and_coeffs(self, model_version):
 
-        print('Loading Model...')
-        self.model_name = f'{self.target}_Causal_model_v{model_version}.pkl'
-        model_path = os.path.join(self.data_dir, self.model_output_path, self.model_name)
-        model_file = open(model_path, 'rb')
+    def fetch_model_and_coeffs(self, model_version):
+        print("Loading Model...")
+        self.model_name = f"{self.target}_Causal_model_v{model_version}.pkl"
+        model_path = os.path.join(
+            self.data_dir, self.model_output_path, self.model_name
+        )
+        model_file = open(model_path, "rb")
         causal_model = pickle.load(model_file)
         # close the file
         model_file.close()
 
-        coeffs = pd.read_csv(os.path.join(self.data_dir, f"data/output/coeffs_v{model_version}.csv"))
-        
+        coeffs = pd.read_csv(
+            os.path.join(self.data_dir, f"data/output/coeffs_v{model_version}.csv")
+        )
+
         return causal_model, coeffs
-    
+
     def get_predictions(self, df, causal_model):
         # print('Performing Prediction')
         x_dowhy_input = df[self.treatment_vars]
-        x_dowhy_input.insert(0,'intercept',1)
+        x_dowhy_input.insert(0, "intercept", 1)
 
-        y_pred_dowhy = causal_model.get_prediction(exog = x_dowhy_input.to_numpy())
-        df[f'{self.target}_pred'] = y_pred_dowhy.predicted_mean.tolist()
+        y_pred_dowhy = causal_model.get_prediction(exog=x_dowhy_input.to_numpy())
+        df[f"{self.target}_pred"] = y_pred_dowhy.predicted_mean.tolist()
 
         return df
-    
-    def get_feature_stats(self, treatment_vars, data):
 
+    def get_feature_stats(self, treatment_vars, data):
         feature_stats = {}
 
         for col in treatment_vars:
@@ -135,16 +142,15 @@ class CustomerScenarios:
                 mean = data[col].mean()
 
             feature_stats[col] = {
-                'col_type': col_type,
-                'min_value': min_value,
-                'max_value': max_value,
-                'mean': mean
+                "col_type": col_type,
+                "min_value": min_value,
+                "max_value": max_value,
+                "mean": mean,
             }
 
         return feature_stats
-    
-    def scenario_creation(self, X, analyze):
 
+    def scenario_creation(self, X, analyze):
         config = X[0]
         self.get_input(config)
 
@@ -153,13 +159,15 @@ class CustomerScenarios:
         #     model_version = self.fetch_model_version(self.target, self.model_output_path)
         #     print("model_versions: ", model_version[::-1])
         #     return model_version
-        
+
         if analyze:
             self.treatment_vars = self.get_treatements()
 
             self.data = self.read_data(self.target, self.treatment_vars)
 
-            self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
+            self.data = self.preprocess_data(
+                self.data, self.target, self.treatment_vars
+            )
 
             causal_model, coeffs = self.fetch_model_and_coeffs(self.version)
 
@@ -173,22 +181,19 @@ class CustomerScenarios:
 
             stats = self.get_feature_stats(self.treatment_vars, self.data)
 
-            return {
-                'predictions': predictions,
-                'stats': stats,
-                'coeffs': coeffs
-            }
-        
-        else:
+            return {"predictions": predictions, "stats": stats, "coeffs": coeffs}
 
-            self.data = self.read_data( self.target, self.treatment_vars)
-            
+        else:
+            self.data = self.read_data(self.target, self.treatment_vars)
+
             # clean Data
-            self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
-            
+            self.data = self.preprocess_data(
+                self.data, self.target, self.treatment_vars
+            )
+
             # New Data
             new_data = pd.DataFrame(self.new_data)
-            
+
             new_data = self.preprocess_data(new_data, self.target, self.treatment_vars)
 
             # load model
@@ -197,7 +202,7 @@ class CustomerScenarios:
             # estimation method
             # self.estimate_method = self.get_estimation_method()
 
-            #predictions
+            # predictions
             self.data = self.get_predictions(self.data, causal_model)
 
             # Prediction on new data
@@ -212,30 +217,35 @@ class CustomerScenarios:
             #     'predictions': predictions,
             #     'data': self.data
             # }
-        
+
             predictions.to_csv(
-                os.path.join(self.data_dir, 
-                             "data/output/customer_output/new_predictions.csv"),
-                               index = False)
-            
+                os.path.join(
+                    self.data_dir, "data/output/customer_output/new_predictions.csv"
+                ),
+                index=False,
+            )
+
             self.data.to_csv(
-                os.path.join(self.data_dir, 
-                             "data/output/customer_output/data_predictions.csv"), 
-                             index = False)
+                os.path.join(
+                    self.data_dir, "data/output/customer_output/data_predictions.csv"
+                ),
+                index=False,
+            )
 
             try:
                 old_predictions = pd.read_csv(
-                    os.path.join(self.data_dir,
-                                 "data/output/customer_output/old_predictions.csv")
-                                 )
-                
+                    os.path.join(
+                        self.data_dir, "data/output/customer_output/old_predictions.csv"
+                    )
+                )
+
             except:
                 old_predictions = pd.DataFrame()
 
             old_predictions = pd.concat([old_predictions, predictions])
-            old_predictions.to_csv(os.path.join(self.data_dir,
-                                 "data/output/customer_output/old_predictions.csv"),
-                                 index = False
-                                 )
-                
-        
+            old_predictions.to_csv(
+                os.path.join(
+                    self.data_dir, "data/output/customer_output/old_predictions.csv"
+                ),
+                index=False,
+            )

@@ -13,7 +13,9 @@ def train_widget(data_path: str, backend: "Training"):
         with st.container(border=True):
             st.markdown("### Data")
             data_object = st.file_uploader("Data File (CSV): ")
-            target_variable = st.selectbox("Target Variable: ", ["GMV_cur", "retention"])
+            target_variable = st.selectbox(
+                "Target Variable: ", ["GMV_cur", "retention"]
+            )
             dag_file = st.file_uploader("DAG File: ")
 
         with st.container(border=True):
@@ -73,4 +75,5 @@ def train_widget(data_path: str, backend: "Training"):
             }
 
             backend.predict([config])
-            render(output_widget)
+            with output_widget:
+                render()

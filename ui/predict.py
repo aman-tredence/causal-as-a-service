@@ -3,7 +3,7 @@ import streamlit as st
 from glob import glob
 
 
-def render(column):
+def render():
     st.markdown("<center><h1>Prediction Complete</h1></center>", unsafe_allow_html=True)
 
 
@@ -18,7 +18,7 @@ def predict_widget(data_path: str, backend: "Testing"):
                     f.write(data_object.read())
 
             target_variable = st.selectbox(
-                "Target Variable: ", ["GMV", "Retention"], key="predict_target"
+                "Target Variable: ", ["GMV_cur", "retention"], key="predict_target"
             )
 
             with st.container(border=True):
@@ -30,7 +30,9 @@ def predict_widget(data_path: str, backend: "Testing"):
                     .lower()
                     .startswith(target_variable.lower())
                 ]
-                st.selectbox("Model Variables: ", options=models, key="predict_model")
+                version = st.selectbox(
+                    "Model Version: ", options=models, key="predict_model"
+                )
 
                 if st.button("Predict", key="Predict_button"):
                     config = {
@@ -40,8 +42,9 @@ def predict_widget(data_path: str, backend: "Testing"):
                             "data_output_path": data_path.joinpath("output"),
                             "model_output_path": data_path.joinpath("..", "model"),
                         },
-                        "model": {"version": 1},
+                        "model": {"version": int(version.strip()[-1])},
                         "analyse": True,
                     }
                     backend.predict([config])
-                    render(output_widget)
+                    with output_widget:
+                        render()
