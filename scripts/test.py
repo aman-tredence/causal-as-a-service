@@ -47,6 +47,11 @@ class Testing:
 
         self.analyse = config["analyse"]
 
+        artifact_file_path = os.path.join(
+            self.data_output_path, f"{self.target}_artifacts.csv"
+        )
+        self.artifacts = pd.read_csv(artifact_file_path)
+
     def get_estimation_method(self):
         artifacts = pd.read_csv(
             f"{self.data_output_path}/artifacts_v{self.version}.csv"
@@ -62,16 +67,9 @@ class Testing:
         return estimation_method
 
     def get_treatements(self):
-        artifacts = pd.read_csv(
-            os.path.join(
-                self.data_output_path, 
-                f"{self.target}_artifacts.csv"
-                )
-        )
 
-        treatments = artifacts[artifacts["Version"] == self.version]["TreatmentVariables"].values[0]
-
-        # treatments = artifacts["TreatmentVariables"].values[0]
+        treatments = self.artifacts[self.artifacts["Version"] == self.version]["TreatmentVariables"].values[0]
+        
         treatments = treatments.split(",")
         treatments = [x.strip() for x in treatments]
 

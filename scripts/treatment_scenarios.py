@@ -45,14 +45,15 @@ class TreatmentScenarios:
         self.mean = config['data_change']['mean']
         self.std_dev = config['data_change']['std_dev']
 
-        artifact_file_path = os.path.join(self.data_dir, f"data/output/artifacts_v{self.version}.csv")
-        print("Reading artifact file from : ", artifact_file_path)
+        artifact_file_path = os.path.join(
+            self.data_dir, f"data/output/{self.target}_artifacts.csv"
+        )
         self.artifacts = pd.read_csv(artifact_file_path)
 
     def get_treatements(self):
         
-        artifacts= pd.read_csv(f"{self.data_dir}/{self.data_output_path}/artifacts_v{self.version}.csv")            
-        treatments = artifacts['TreatmentVariables'].values[0]
+        treatments = self.artifacts[self.artifacts["Version"] == self.version]["TreatmentVariables"].values[0]
+        
         treatments = treatments.split(',')
         treatments = [x.strip() for x in treatments]
         

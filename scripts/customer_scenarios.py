@@ -55,10 +55,9 @@ class CustomerScenarios:
         print("Target: ", self.target)
 
     def get_treatements(self):
-        artifacts = pd.read_csv(
-            f"{self.data_dir}/{self.data_output_path}/{self.target}_artifacts.csv"
-        )
-        treatments = artifacts["TreatmentVariables"].values[0]
+        
+        treatments = self.artifacts[self.artifacts["Version"] == self.version]["TreatmentVariables"].values[0]
+
         treatments = treatments.split(",")
         treatments = [x.strip() for x in treatments]
 
@@ -111,8 +110,10 @@ class CustomerScenarios:
         model_file.close()
 
         coeffs = pd.read_csv(
-            os.path.join(self.data_dir, f"data/output/coeffs_v{model_version}.csv")
+            os.path.join(self.data_dir, f"data/output/{self.target}_coeffs.csv")
         )
+
+        coeffs = coeffs[coeffs["Version"] == self.version]
 
         return causal_model, coeffs
 

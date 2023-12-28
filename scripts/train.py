@@ -347,8 +347,8 @@ class Training:
 
         print("Saving Coefficents...")
 
-        coeffs_file = os.path.join(self.data_output_path, f"{self.target}_coeffs_.csv")
-        df_coeffs_db.to_csv(coeffs_file)
+        coeffs_file = os.path.join(self.data_output_path, f"{self.target}_coeffs.csv")
+        df_coeffs_db.to_csv(coeffs_file, index=False)
 
 
 # # Logic starts here
