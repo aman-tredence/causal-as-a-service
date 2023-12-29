@@ -2,7 +2,7 @@ import pathlib
 import streamlit as st
 
 from ui import train_widget, predict_widget, treatment_widget, customer_widget
-from scripts import Training, Testing
+from scripts import Training, Testing, TreatmentScenarios, CustomerScenarios
 
 
 st.set_page_config(layout="wide")
@@ -22,6 +22,8 @@ def main():
     backend = {
         "train": Training(DATA_PATH),
         "predict": Testing(DATA_PATH),
+        "treatment": TreatmentScenarios(DATA_PATH.parent),
+        "customer": CustomerScenarios(DATA_PATH),
     }
 
     with train:
@@ -30,11 +32,11 @@ def main():
     with predict:
         predict_widget(DATA_PATH, backend["predict"])
 
-    # with treatment:
-    #     treatment_widget(DATA_PATH)
+    with treatment:
+        treatment_widget(DATA_PATH, backend["treatment"])
 
-    # with customer:
-    #     customer_widget(DATA_PATH)
+    with customer:
+        customer_widget(DATA_PATH, backend["customer"])
 
 
 main()

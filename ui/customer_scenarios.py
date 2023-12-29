@@ -3,11 +3,11 @@ from glob import glob
 import streamlit as st
 
 
-def render(output_widget):
-    ...
+def render():
+    st.write("Done")
 
 
-def customer_widget(data_path):
+def customer_widget(data_path: str, backend: "CustomerScenarios"):
     input_widget, output_widget = st.columns([0.25, 0.75])
     with input_widget:
         data_file = st.file_uploader("Data (CSV): ", key="customer_data_file")
@@ -21,7 +21,14 @@ def customer_widget(data_path):
             if f.split(os.path.sep)[-1].lower().startswith(target.lower())
         ]
         model_version = st.selectbox("Model Version: ", models, key="customer_model")
-        if st.button("Analyze"):
+        st.button(
+            "Analyze",
+            key="customer_analyze",
+            on_click=lambda: st.session_state.update({"customer_analyze_active": True}),
+        )
+        if "customer_analyze_active" not in st.session_state:
+            st.session_state["customer_analyze_active"] = False
+        if st.session_state["customer_analyze_active"]:
             # TODO: Get columns
             for col in ...:
                 with st.container(border=True):
@@ -35,4 +42,5 @@ def customer_widget(data_path):
                     if distribution in ["Normal", "Lognormal"]:
                         std_dev = st.number_input("Std Dev: ")
             if st.button("Run"):
-                render(output_widget)
+                with output_widget:
+                    render()
