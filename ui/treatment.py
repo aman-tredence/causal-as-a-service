@@ -1,11 +1,64 @@
 import os
 import json
+import pandas as pd
 from glob import glob
 import streamlit as st
+import plotly.express as px
 
 
-def render():
-    st.write("Done")
+def predict(
+    backend, config: dict, output_widget, col: str, target: str, data_path: str
+):
+    config["data_change"]["tweak_col"] = col
+    _ = backend.scenario_creation([config], fetch_columns=False)
+    new = pd.read_csv(
+        os.path.join(data_path, "output", "treatment_output", "new_output.csv")
+    )
+
+    with output_widget:
+        st.markdown("## New Variables")
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("### Treatment Variable")
+            plt = px.histogram(new[col])
+            st.plotly_chart(plt)
+            st.markdown(
+                f"### Mean: {round(new[col].mean(), 3)}\t\t\t Std Dev: {round(new[col].std(), 3)}"
+            )
+        with col_2:
+            st.markdown("### Target Variable")
+            plt = px.histogram(new[f"{target}_pred"])
+            st.plotly_chart(plt)
+            st.markdown(
+                f"### Mean: {round(new[f'{target}_pred'].mean(), 3)}\t\t\t Std Dev: {round(new[f'{target}_pred'].std(), 3)}"
+            )
+
+
+def analyze(
+    backend, config: dict, output_widget, col: str, target: str, data_path: str
+):
+    config["data_change"]["tweak_col"] = col
+    _ = backend.scenario_creation([config], fetch_columns=False)
+    old = pd.read_csv(
+        os.path.join(data_path, "output", "treatment_output", "old_output.csv")
+    )
+    with output_widget:
+        st.markdown("## Old Variables")
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("### Treatment Variable")
+            plt = px.histogram(old[col])
+            st.plotly_chart(plt)
+            st.markdown(
+                f"### Mean: {round(old[col].mean(), 3)}\t\t\t Std Dev: {round(old[col].std(), 3)}"
+            )
+        with col_2:
+            st.markdown("### Target Variable")
+            plt = px.histogram(old[f"{target}_pred"])
+            st.plotly_chart(plt)
+            st.markdown(
+                f"### Mean: {round(old[f'{target}_pred'].mean(), 3)}\t\t\t Std Dev: {round(old[f'{target}_pred'].std(), 3)}"
+            )
 
 
 def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
@@ -54,6 +107,7 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
                 if "treatment_analyze_active" not in st.session_state:
                     st.session_state["treatment_analyze_active"] = False
                 if st.session_state["treatment_analyze_active"]:
+                    analyze(backend, config, output_widget, col_name, target, data_path)
                     # TODO draw distribution
                     with st.container(border=True):
                         distribution = st.selectbox(
@@ -78,4 +132,11 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
                                 "std_dev": std_dev,
                             }
                             with output_widget:
-                                render()
+                                predict(
+                                    backend,
+                                    config,
+                                    output_widget,
+                                    col_name,
+                                    target,
+                                    data_path,
+                                )

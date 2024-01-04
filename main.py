@@ -23,7 +23,7 @@ def main():
         "train": Training(DATA_PATH),
         "predict": Testing(DATA_PATH),
         "treatment": TreatmentScenarios(DATA_PATH.parent),
-        "customer": CustomerScenarios(DATA_PATH),
+        "customer": CustomerScenarios(DATA_PATH.parent),
     }
 
     with train:
