@@ -1,16 +1,24 @@
 import os
 import json
+import numpy as np
 import pandas as pd
 from glob import glob
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 
+bins = 70
 
 def predict(
     backend, config: dict, output_widget, col: str, target: str, data_path: str
 ):
     config["data_change"]["tweak_col"] = col
     _ = backend.scenario_creation([config], fetch_columns=False)
+    
+    old = pd.read_csv(
+        os.path.join(data_path, "output", "treatment_output", "old_output.csv")
+    )
+
     new = pd.read_csv(
         os.path.join(data_path, "output", "treatment_output", "new_output.csv")
     )
@@ -20,14 +28,51 @@ def predict(
         col_1, col_2 = st.columns(2)
         with col_1:
             st.markdown("### Treatment Variable")
-            plt = px.histogram(new[col])
+
+            df = pd.DataFrame(
+                dict(
+                    series = np.concatenate((["a"]*len(old[col]), ["b"]*len(new[col]))),
+                    data = np.concatenate((old[col], new[col]))
+                )
+            )
+
+            # color_discrete_map = {"a": "blue", "b": "orange"}
+
+            plt = px.histogram(
+                df,
+                x = "data",
+                color = "series", 
+                nbins=bins, 
+                barmode = "overlay", 
+                # color_discrete_map=color_discrete_map
+                )
+
             st.plotly_chart(plt)
             st.markdown(
                 f"### Mean: {round(new[col].mean(), 3)}\t\t\t Std Dev: {round(new[col].std(), 3)}"
             )
         with col_2:
             st.markdown("### Target Variable")
-            plt = px.histogram(new[f"{target}_pred"])
+
+            df = pd.DataFrame(
+                dict(
+                    series = np.concatenate((["a"]*len(old[f"{target}_pred"]), ["b"]*len(new[f"{target}_pred"]))),
+                    data = np.concatenate((old[f"{target}_pred"], new[f"{target}_pred"]))
+                )
+            )
+
+            plt = px.histogram(
+                df, x = "data", 
+                color = "series", 
+                nbins=bins, 
+                barmode = "overlay",
+                )
+
+            # fig = go.Figure()
+            # fig = px.histogram(old[f"{target}_pred"], opacity = 0.7, nbins=30)
+            # fig.add_histogram(new[f"{target}_pred"], opacity = 0.7, nbins=30)
+
+            # fig.update_layout(title_text='Old vs New', barmode='overlay')
             st.plotly_chart(plt)
             st.markdown(
                 f"### Mean: {round(new[f'{target}_pred'].mean(), 3)}\t\t\t Std Dev: {round(new[f'{target}_pred'].std(), 3)}"
@@ -47,19 +92,20 @@ def analyze(
         col_1, col_2 = st.columns(2)
         with col_1:
             st.markdown("### Treatment Variable")
-            plt = px.histogram(old[col])
+            plt = px.histogram(old[col], nbins = bins)
             st.plotly_chart(plt)
             st.markdown(
                 f"### Mean: {round(old[col].mean(), 3)}\t\t\t Std Dev: {round(old[col].std(), 3)}"
             )
         with col_2:
             st.markdown("### Target Variable")
-            plt = px.histogram(old[f"{target}_pred"])
+            plt = px.histogram(old[f"{target}_pred"], nbins = bins)
             st.plotly_chart(plt)
             st.markdown(
                 f"### Mean: {round(old[f'{target}_pred'].mean(), 3)}\t\t\t Std Dev: {round(old[f'{target}_pred'].std(), 3)}"
             )
 
+    
 
 def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
     input_widget, output_widget = st.columns([0.25, 0.75])

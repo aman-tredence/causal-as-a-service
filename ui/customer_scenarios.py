@@ -48,6 +48,7 @@ def customer_widget(data_path: str, backend: "CustomerScenarios"):
             with open(os.path.join(data_path, "input/customer_config.json"), "r") as f:
                 config = json.load(f)
             config["model"]["version"] = int(model_version.split("v")[-1])
+            config["data"]["target"] = target
             results = backend.scenario_creation([config], analyze=True)
             first_customer = pd.DataFrame(results["predictions"])
             coeffs = pd.DataFrame(results["coeffs"])
@@ -68,6 +69,8 @@ def customer_widget(data_path: str, backend: "CustomerScenarios"):
             ) as f:
                 json.dump(stats, f)
 
+            coeffs.rename({"Unnamed: 0": "Target Varible"}, axis = 1, inplace = True)
+            
             with output_widget:
                 st.markdown("### Coefficients")
                 st.table(coeffs)

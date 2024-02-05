@@ -115,16 +115,17 @@ class TreatmentScenarios:
         return df
     
     def normal_distribution(self, size, mean, std_dev, min_value, max_value):
-        while True:
-            u1 = np.random.rand(size)
-            u2 = np.random.rand(size)
-            z0 =  np.sqrt(-2 * np.log(u1)) * np.cos(2 * np.pi * u2)
+        
+        np.random.seed(42)
 
-            arr = mean + std_dev + z0
-            arr = np.clip(arr, min_value, max_value)
+        # Generate a normal distributed array
+        normal_array = np.random.normal(loc=mean, scale=std_dev, size=size)
 
-            if np.all(arr >= min_value) and np.all(arr <= max_value):
-                return arr
+        # Clip the values to be within the specified range
+        clipped_array = np.clip(normal_array, min_value, max_value)
+
+        print("Clipped array mean: ", clipped_array.mean())
+        return clipped_array
             
 
     def poisson_distribution(self, size, mean, min_value, max_value):
@@ -187,6 +188,8 @@ class TreatmentScenarios:
             mean = float(self.mean)
             std_dev = float(self.std_dev)
             size = len(self.data)
+
+            print("Mean: ", mean)
 
             if distribution.lower() == 'normal':
                 new_df[var] = self.normal_distribution(size, mean, std_dev, min_value, max_value)

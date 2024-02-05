@@ -172,7 +172,7 @@ class CustomerScenarios:
 
             causal_model, coeffs = self.fetch_model_and_coeffs(self.version)
 
-            row_df = pd.DataFrame(self.data.iloc[0, :]).T
+            row_df = self.data.sample(n=1)
 
             # Prediction on first customer
 
