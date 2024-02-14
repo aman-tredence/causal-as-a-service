@@ -1,10 +1,29 @@
 import os
+import pandas as pd
 import streamlit as st
 from glob import glob
+import plotly.express as px
+import plotly.graph_objects as go
 
 
-def render():
+def render(output_path, predictions, treatment_vars, target_variable):
+
+    treatment_vars = ", ".join(treatment_vars)
     st.markdown("<center><h1>Prediction Complete</h1></center>", unsafe_allow_html=True)
+    st.markdown(f"<left><h4>Treament Variables: </h4> <p>{treatment_vars}</p></left>", unsafe_allow_html=True)
+    st.markdown(f"<left><h4>Predictions are saved to: </h4><p>{output_path}</p></left>", unsafe_allow_html=True)
+
+    
+
+    st.markdown("<left><h4>Prediction Distribution<h4></left>", unsafe_allow_html=True)
+
+    plt = px.histogram(
+                predictions,
+                x = f"{target_variable}_pred"
+                )
+    
+    st.plotly_chart(plt)
+
 
 
 def predict_widget(data_path: str, backend: "Testing"):
@@ -45,6 +64,11 @@ def predict_widget(data_path: str, backend: "Testing"):
                         "model": {"version": int(version.strip()[-1])},
                         "analyse": True,
                     }
-                    backend.predict([config])
+                    output = backend.predict([config])
+                    output_path = output["output_path"]
+                    treatment_vars = output["treatment_vars"]
+
+                    predictions = pd.read_csv(output_path)
+
                     with output_widget:
-                        render()
+                        render(output_path, predictions, treatment_vars, target_variable)

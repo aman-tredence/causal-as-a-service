@@ -23,6 +23,8 @@ def predict(
         os.path.join(data_path, "output", "treatment_output", "new_output.csv")
     )
 
+    color_discrete_map = {"a": "blue", "b": "orange"}
+
     with output_widget:
         st.markdown("## New Variables")
         col_1, col_2 = st.columns(2)
@@ -36,7 +38,6 @@ def predict(
                 )
             )
 
-            # color_discrete_map = {"a": "blue", "b": "orange"}
 
             plt = px.histogram(
                 df,
@@ -44,7 +45,7 @@ def predict(
                 color = "series", 
                 nbins=bins, 
                 barmode = "overlay", 
-                # color_discrete_map=color_discrete_map
+                color_discrete_map=color_discrete_map
                 )
 
             st.plotly_chart(plt)
@@ -66,6 +67,8 @@ def predict(
                 color = "series", 
                 nbins=bins, 
                 barmode = "overlay",
+                color_discrete_map=color_discrete_map
+
                 )
 
             # fig = go.Figure()
@@ -82,6 +85,7 @@ def predict(
 def analyze(
     backend, config: dict, output_widget, col: str, target: str, data_path: str
 ):
+    config['target'] = target
     config["data_change"]["tweak_col"] = col
     _ = backend.scenario_creation([config], fetch_columns=False)
     old = pd.read_csv(
@@ -119,6 +123,10 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
             target = st.selectbox(
                 "Target Variable: ", ["GMV_cur", "retention"], key="treatment_target"
             )
+
+            # print("Target before analyze: ", target)
+            
+
             models = [
                 f.split(os.path.sep)[-1].strip(".pkl")
                 for f in glob(os.path.join(data_path, "..", "model", "*.pkl"))
@@ -139,6 +147,7 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
             with open(os.path.join(data_path, "input/treatment_config.json"), "r") as f:
                 config = json.load(f)
                 config["model"]["version"] = int(model_version.split("v")[-1])
+                config['data']['target'] = target
             results = backend.scenario_creation([config], fetch_columns=True)
             with st.container(border=True):
                 col_name = st.selectbox("Select Columns: ", results)
@@ -153,6 +162,7 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
                 if "treatment_analyze_active" not in st.session_state:
                     st.session_state["treatment_analyze_active"] = False
                 if st.session_state["treatment_analyze_active"]:
+                    config['data']['target'] = target
                     analyze(backend, config, output_widget, col_name, target, data_path)
                     # TODO draw distribution
                     with st.container(border=True):
@@ -169,6 +179,7 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
                             else 1
                         )
                         if st.button("Predict", key="treatment_predict"):
+                            config["target"] = target
                             config["data_change"] = {
                                 "tweak_col": col_name,
                                 "distribution": distribution,
@@ -177,6 +188,7 @@ def treatment_widget(data_path: str, backend: "TreatmentScenarios"):
                                 "mean": mean,
                                 "std_dev": std_dev,
                             }
+                            config['data']['target'] = target
                             with output_widget:
                                 predict(
                                     backend,

@@ -1,10 +1,20 @@
 import os
 import json
 import streamlit as st
+import pandas as pd
 
 
-def render():
+def render(version, target_variable, coefficents, causal_est_effect):
     st.markdown("<center><h1>Training Complete</h1></center>", unsafe_allow_html=True)
+
+    st.markdown(f"<left><h4>Tareget Variable: {target_variable}</h4></left>", unsafe_allow_html=True)
+    st.markdown(f"<left><h4>Model Version: {version}</h4></left>", unsafe_allow_html=True)
+    st.markdown(f"<left><h4>Causal Estimate: {round(causal_est_effect, 2)}</h4></left>", unsafe_allow_html=True)
+
+    coefficents = pd.DataFrame(coefficents)
+    st.markdown(f"<left><h3>Coeffiecents </h3></left>", unsafe_allow_html=True)
+    st.table(data=coefficents)
+    
 
 
 def train_widget(data_path: str, backend: "Training"):
@@ -74,6 +84,10 @@ def train_widget(data_path: str, backend: "Training"):
                 "model": {"save": save},
             }
 
-            backend.predict([config])
+            output = backend.predict([config])
+            coefficents = output['coefficents']
+            causal_est_effect = output['causal_estimate']
+
+            version = output['version']
             with output_widget:
-                render()
+                render(version, target_variable, coefficents, causal_est_effect)

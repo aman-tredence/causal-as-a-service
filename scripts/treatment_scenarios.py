@@ -35,6 +35,7 @@ class TreatmentScenarios:
         self.data_output_path = config['data']['data_output_path']
         self.model_output_path = config['data']['model_output_path']
 
+        print("what is target? ", self.target)
         #Model
         self.version = config['model']['version']
 
@@ -189,7 +190,7 @@ class TreatmentScenarios:
             std_dev = float(self.std_dev)
             size = len(self.data)
 
-            print("Mean: ", mean)
+            # print("Mean: ", mean)
 
             if distribution.lower() == 'normal':
                 new_df[var] = self.normal_distribution(size, mean, std_dev, min_value, max_value)
@@ -226,6 +227,8 @@ class TreatmentScenarios:
             #     'new_df': new_df
             # }
 
+            # print(old_output.columns)
+            # print(new_output.columns)
             old_output.to_csv(
                 os.path.join(self.data_dir, 
                              "data/output/treatment_output/old_output.csv"),

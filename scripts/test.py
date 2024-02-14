@@ -134,12 +134,13 @@ class Testing:
         # Saving Predictions-------------------------------------------
         print("Saving Predictions...")
 
+        filename = os.path.join(self.data_output_path, f"{self.model_name[:-4]}_predictions.csv")
         self.data.to_csv(
-            os.path.join(self.data_output_path, f"{self.model_name[:-4]}_predictions.csv"),
+            filename,
             index=False,
         )
 
-        return f"{self.data_output_path}"
+        return filename
 
     def predict(self, X, features_name=None):
         config = X[0]
