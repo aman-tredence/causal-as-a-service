@@ -1,2 +1,2 @@
-Unnamed: 0,beta0,oos,trf_avg,atc,latency,perfect_order,Version
-GMV_cur,-0.576285935,-50.15809713,0.499130219,9.999091636,-19.11939441,201.3240618,3
+Target,beta0,oos,trf_avg,atc,latency,perfect_order,Version
+retention,-0.067047488,0.041590138,1.52e-05,0.00062086,-0.006411038,-0.00307575,5

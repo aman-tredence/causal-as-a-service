@@ -69,7 +69,7 @@ def customer_widget(data_path: str, backend: "CustomerScenarios"):
             ) as f:
                 json.dump(stats, f)
 
-            coeffs.rename({"Unnamed: 0": "Target Varible"}, axis = 1, inplace = True)
+            # coeffs.rename({"Unnamed: 0": "Target Varible"}, axis = 1, inplace = True)
             
             with output_widget:
                 st.markdown("### Coefficients")

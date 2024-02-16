@@ -342,9 +342,20 @@ class Training:
             df_coeffs_db = pd.DataFrame()
 
         df_coeffs['Version'] = self.version
+        df_coeffs['Target'] = self.target
 
+        df_coeffs.reset_index(drop = True, inplace = True)
+        
+        print("Database:")
+        print(df_coeffs_db)
+        print()
+        print("New Coeffs:")
+        print(df_coeffs)
         df_coeffs_db = pd.concat([df_coeffs_db, df_coeffs])
 
+        print()
+        print("After merging:")
+        print(df_coeffs_db)
         print("Saving Coefficents...")
 
         coeffs_file = os.path.join(self.data_output_path, f"{self.target}_coeffs.csv")
