@@ -76,4 +76,30 @@ trf_avg -> retention;
 atc -> retention;
 latency -> retention;
 perfect_order -> retention;
-}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\retention_Causal_model_v6.pkl,0.010391601810781859,0,0,backdoor.generalized_linear_model,6,2024-02-16,,,retention_identified_estimand_v6.pkl
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\retention_Causal_model_v6.pkl,0.0103916018107818,0,0,backdoor.generalized_linear_model,6,2024-02-16,,,retention_identified_estimand_v6.pkl
+retention,"oos, trf_avg, atc, latency, perfect_order",C:\Users\aman.jhakra\Documents\Causal as a Service\data\input\input_data.csv,"strict digraph {
+retention;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> retention;
+trf_avg -> retention;
+atc -> retention;
+latency -> retention;
+perfect_order -> retention;
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\retention_Causal_model_v7.pkl,0.0138170329006577,0,0,backdoor.generalized_linear_model,7,2024-02-16,,,retention_identified_estimand_v7.pkl
+retention,"oos, trf_avg, atc, latency, perfect_order",C:\Users\aman.jhakra\Documents\Causal as a Service\data\input\input_data.csv,"strict digraph {
+retention;
+oos;
+trf_avg;
+atc;
+latency;
+perfect_order;
+oos -> retention;
+trf_avg -> retention;
+atc -> retention;
+latency -> retention;
+perfect_order -> retention;
+}",C:\Users\aman.jhakra\Documents\Causal as a Service\data\..\model\retention_Causal_model_v8.pkl,0.013817032900657722,0,0,backdoor.generalized_linear_model,8,2024-02-16,,,retention_identified_estimand_v8.pkl

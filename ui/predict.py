@@ -1,4 +1,5 @@
 import os
+import re
 import pandas as pd
 import streamlit as st
 from glob import glob
@@ -19,7 +20,8 @@ def render(output_path, predictions, treatment_vars, target_variable):
 
     plt = px.histogram(
                 predictions,
-                x = f"{target_variable}_pred"
+                x = f"{target_variable}_pred",
+                nbins=40
                 )
     
     st.plotly_chart(plt)
@@ -53,7 +55,11 @@ def predict_widget(data_path: str, backend: "Testing"):
                     "Model Version: ", options=models, key="predict_model"
                 )
 
+                
                 if st.button("Predict", key="Predict_button"):
+                    # print("Model Version: ", int(version.strip()[-1]))
+                    model = int(re.findall("\d+", version)[0])
+                    print("Model Version: ", model)
                     config = {
                         "data": {
                             "target": target_variable,
@@ -61,7 +67,7 @@ def predict_widget(data_path: str, backend: "Testing"):
                             "data_output_path": data_path.joinpath("output"),
                             "model_output_path": data_path.joinpath("..", "model"),
                         },
-                        "model": {"version": int(version.strip()[-1])},
+                        "model": {"version": model},
                         "analyse": True,
                     }
                     output = backend.predict([config])

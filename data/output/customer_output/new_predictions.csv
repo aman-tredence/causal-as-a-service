@@ -1,2 +1,2 @@
-oos,trf_avg,atc,latency,perfect_order,retention_pred
-0.3,503.76,51.62,1.24,0.11,0.4942124155838166
+oos,trf_avg,atc,latency,perfect_order,GMV_cur_pred
+0.63,0.39,66.81,1833.46,0.17,1928.62808898083
