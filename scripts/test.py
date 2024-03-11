@@ -79,8 +79,10 @@ class Testing:
         print("Reading data from GCS")
 
         data = pd.read_csv(f"{self.data_path}/predict_data.csv")
-        data = data[treatment_vars + [target]]
+        data = data[treatment_vars] # + [target]]
 
+        print(data.columns)
+        print(len(data))
         return data
 
     def preprocess_data(self, df, target, treatment_vars):
@@ -146,13 +148,6 @@ class Testing:
         config = X[0]
         self.get_input(config)
         
-        # if self.analyse:
-        #     # fetch the Trained Models
-        #     model_version = self.fetch_model_version(
-        #         self.target, self.model_output_path
-        #     )
-        #     print("model_versions: ", model_version[::-1])
-        
         if self.data_path:
             print("true")
             # get treatment variables
@@ -173,14 +168,8 @@ class Testing:
 
             self.test_df = self.data.copy()
 
-        # converting data to Binary if method selected is Binary method
-        #         if self.estimate_method in self.binary_methods:
-        for treatment in self.treatment_vars:
-            # convert the treatment variable to binary
-            thresh = self.test_df[treatment].median()
-            self.test_df[treatment] = self.test_df[treatment].apply(
-                lambda x: 1 if x > thresh else 0
-            )
+            print("columns order: ", self.test_df.columns)
+            print("list order: ", self.treatment_vars)
 
         # predictions
         self.data = self.get_predictions(causal_model)

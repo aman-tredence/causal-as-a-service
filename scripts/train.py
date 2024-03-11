@@ -123,7 +123,9 @@ class Training:
         )
         # Causal Model
         causal_model = causal_estimate.estimator.model
+
         print(causal_model.summary())
+
         # Get Coefficients
         coeffs = causal_model.params
         coeffs_dict = dict(zip(["beta0"] + self.treatment_vars, coeffs))
@@ -144,8 +146,10 @@ class Training:
         causal_results = {}
         control_value = [0 for i in range(len(self.treatment_vars))]
         for i, v in enumerate(self.treatment_vars):
+
             treatment_value = [0 for i in range(len(self.treatment_vars))]
             treatment_value[i] = 1
+            
             causal_estimate = model.estimate_effect(
                 identified_estimand,
                 method_name=self.estimate_method,
@@ -155,6 +159,7 @@ class Training:
                 treatment_value=treatment_value,
                 method_params=method_params,
             )
+
             estimates[v] = causal_estimate
             causal_model = causal_estimate.estimator.model
             causal_estimate.interpret(method_name="textual_effect_interpreter")
@@ -167,10 +172,10 @@ class Training:
         return causal_model, self.df_coeffs, causal_estimate
 
     def refutation_check(self, model, identified_estimand, causal_estimate):
+        
         if self.refutation_method == None:
             print("Skipping Refutation Check...")
             new_effect, p_value = 0, 0
-
         if self.refutation_method:
             print("Performing Refutation Check...")
             refutation_result = model.refute_estimate(
@@ -187,9 +192,12 @@ class Training:
     def causal_analysis(self):
         # Read data from GCS
         self.data = self.read_data(self.target, self.treatment_vars)
+        
         # Clean Data
         self.data = self.preprocess_data(self.data, self.target, self.treatment_vars)
+
         train_df = self.data.copy()
+        
         # Converting data to Binary if method selected is Binary method
         if self.estimate_method in self.binary_methods:
             for treatment in self.treatment_vars:
@@ -199,12 +207,16 @@ class Training:
                     lambda x: 1 if x > thresh else 0
                 )
         print("Creating Causal Model")
+
+
+        print(train_df.columns)
         model = CausalModel(
             data=train_df,
             graph=self.dag,
             treatment=self.treatment_vars,
             outcome=self.target,
         )
+
         print("Identifying the Causal effect")
         identified_estimand = model.identify_effect(
             proceed_when_unidentifiable=True, method_name="exhaustive-search"
@@ -221,6 +233,7 @@ class Training:
                 model, identified_estimand
             )
             print("causal Estimate: ", causal_estimate.value)
+
         # Refutatoin Check
         new_effect, p_values = self.refutation_check(
             model, identified_estimand, causal_estimate
