@@ -210,6 +210,8 @@ class Training:
 
 
         print(train_df.columns)
+        
+        # Step 1
         model = CausalModel(
             data=train_df,
             graph=self.dag,
@@ -217,10 +219,13 @@ class Training:
             outcome=self.target,
         )
 
+        # Step 2
         print("Identifying the Causal effect")
         identified_estimand = model.identify_effect(
             proceed_when_unidentifiable=True, method_name="exhaustive-search"
         )
+
+        # Step 3
         if self.estimate_method == "backdoor.linear_regression":
             # causal Estimate
             causal_model, df_coeffs, causal_estimate = self.causal_estimate_linear(
@@ -234,7 +239,7 @@ class Training:
             )
             print("causal Estimate: ", causal_estimate.value)
 
-        # Refutatoin Check
+        # Step 4 Refutatoin Check
         new_effect, p_values = self.refutation_check(
             model, identified_estimand, causal_estimate
         )
@@ -318,23 +323,23 @@ class Training:
             )
 
         artifacts_dict = {
-            "Target": self.target,
-            "TreatmentVariables": ", ".join(self.treatment_vars),
-            "TableName": self.data_path,
-            "DAG": self.dag,
-            "ModelName": self.model_name,
-            "CausalEstimate": Causal_estimate.value,
-            "RefutationNewEstimate": new_effect,
-            "p_value": p_value,
-            "EstimationMethod": self.estimate_method,
-            "Version": self.version,
-            "ModelCreationDate": dt.today().date(),
-            "IdentifiedEstimandFile": f"{self.target}_identified_estimand_v{self.version}.pkl",
+            "Target": [self.target],
+            "TreatmentVariables":[ ", ".join(self.treatment_vars)],
+            "TableName": [self.data_path],
+            "DAG":[ self.dag],
+            "ModelName": [self.model_name],
+            "CausalEstimate": [Causal_estimate.value],
+            "RefutationNewEstimate": [new_effect],
+            "p_value": [p_value],
+            "EstimationMethod": [self.estimate_method],
+            "Version": [self.version],
+            "ModelCreationDate": [dt.today().date()],
+            "IdentifiedEstimandFile": [f"{self.target}_identified_estimand_v{self.version}.pkl"],
             #'ModelURL': url,
         }
 
         # Updating the Artifact DataFrame
-        artifacts = artifacts.append(artifacts_dict, ignore_index=True)
+        artifacts = pd.concat([artifacts, pd.DataFrame.from_dict(artifacts_dict)], ignore_index=True) # artifacts.append(artifacts_dict, ignore_index=True)
         # Register the Artifact file to mlflow
         artifacts_file = os.path.join(self.data_output_path, f"{self.target}_artifacts.csv")
         artifacts.to_csv(artifacts_file, index=False)

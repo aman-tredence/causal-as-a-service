@@ -100,7 +100,7 @@ class TreatmentScenarios:
         self.model_name = f'{self.target}_Causal_model_v{self.version}.pkl'
         model_path = os.path.join(self.data_dir, self.model_output_path, self.model_name)
         model_file = open(model_path, 'rb')
-        causal_model = pickle.load(model_file)
+        causal_model = pd.read_pickle(model_file)
         # close the file
         model_file.close()
         return causal_model
